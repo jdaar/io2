@@ -16,6 +16,7 @@
         buildInputs = [
           pkgs.python313
           pkgs.python313Packages.pip
+          pkgs.python313Packages.numpy
           pkgs.python313Packages.manim
           pkgs.python313Packages.manim-slides
           pkgs.texliveFull
@@ -31,7 +32,7 @@
 				program = "${pkgs.writeShellScriptBin "execute_manim" ''
 					#!${pkgs.bash}/bin/bash
 					manim-slides render $1 $2
-					manim-slides convert $2 output.html
+					manim-slides convert --use-template template.html --one-file $2 output.html
 				''}/bin/execute_manim";
 			};
     };
