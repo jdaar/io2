@@ -31,8 +31,8 @@
 				type = "app";
 				program = "${pkgs.writeShellScriptBin "execute_manim" ''
 					#!${pkgs.bash}/bin/bash
-					manim-slides render $1 $2
-					manim-slides convert --use-template template.html --one-file $2 output.html
+					manim-slides render -q l $1 $2
+					manim-slides convert --use-template template.html $2 output.html
 				''}/bin/execute_manim";
 			};
     };
