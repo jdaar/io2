@@ -16,6 +16,7 @@ class State:
         self.position = ORIGIN
         self.connected_edges = []
         self.definition = definition
+        self.terms = []
     
     def move_to(self, position):
         self.position = position
@@ -42,18 +43,24 @@ class State:
             self.rendered[1].animate.set_color(BLACK)
         ]
 
+    def add_term(self, tex):
+        self.terms.append(tex)
+
 class Edge:
-    def __init__(self, origin, dest, label) -> None:
+    def __init__(self, origin, dest, label, numeric_value) -> None:
         self.origin = origin
         self.dest = dest
         self.label = label
+        self.numeric_value = numeric_value
         self.direction = 1 if self.origin.position[0] > self.dest.position[0] else -1
 
     def render(self, slide):
         direction = self.direction
         self.rendered_arrow = CurvedArrow(
             self.origin.position + np.array([0, STATE_RADIUS * direction, 0]),
-            self.dest.position + np.array([0, STATE_RADIUS * direction, 0])
+            self.dest.position + np.array([0, STATE_RADIUS * direction, 0]),
+            fill_color = GREY,
+            stroke_color = GREY
         )
 
         slide.play(Write(self.rendered_arrow))
@@ -93,9 +100,17 @@ class Queue:
         state = State(label, definition)
         self.states.append(state)
 
-    def add_edge(self, origin_idx, dest_idx, label):
-        edge = Edge(self.states[origin_idx], self.states[dest_idx], label)
+    def add_edge(self, origin_idx, dest_idx, label, numeric_value):
+        edge = Edge(self.states[origin_idx], self.states[dest_idx], label, numeric_value)
         self.edges.append(edge)
+        print((self.states[origin_idx].label, self.states[dest_idx].label, label, numeric_value))
+        self.states[origin_idx].add_term(
+            val1 := '-' + str(numeric_value) + self.states[dest_idx].label
+        )
+        self.states[dest_idx].add_term(
+            val2 := '+' + str(numeric_value) + self.states[origin_idx].label
+        )
+        print((val1, val2))
 
     def focus_state(self, slide: Slide, state_idx):
         animations = []
@@ -109,9 +124,16 @@ class Queue:
                 animations += edge.focus(self.states[state_idx])
             else:
                 animations += edge.unfocus()
-        formula = Tex(r"$S3 = $")
+        formula = Tex('$' + self.states[state_idx].label + ' = ' + ' '.join(self.states[state_idx].terms) + '$')
+        formula.move_to(LABEL_ORIGIN)
         slide.play(
-            *animations
+            *animations,
+            Write(formula),
+        )
+        slide.wait()
+        slide.next_slide()
+        slide.play(
+            FadeOut(formula)
         )
 
     def render(self, slide: Slide):
@@ -139,21 +161,24 @@ class QueueVisualization(Slide):
         queue.render(self)
         self.wait()
         self.next_slide()
-        queue.add_edge(0, 1, r"$\lambda = 4$")
-        queue.add_edge(1, 0, r"$\mu = 2$")
+        queue.add_edge(0, 1, r"$\lambda = 4$", 4)
+        queue.add_edge(1, 0, r"$\mu = 2$", 2)
         queue.render(self)
         self.wait()
         self.next_slide()
-        queue.add_edge(1, 2, r"$\lambda = 1.4$")
-        queue.add_edge(2, 1, r"$\mu = 2$")
+        queue.add_edge(1, 2, r"$\lambda = 1.4$", 1.4)
+        queue.add_edge(2, 1, r"$\mu = 2$", 2)
         queue.render(self)
         self.wait()
         self.next_slide()
-        queue.add_edge(3, 2, r"$\lambda = 4$")
-        queue.add_edge(2, 3, r"$\mu = 2$")
+        queue.add_edge(3, 2, r"$\lambda = 4$", 4)
+        queue.add_edge(2, 3, r"$\mu = 2$", 2)
         queue.render(self)
         self.wait()
         self.next_slide()
         queue.focus_state(self, 2)
+        self.wait()
+        self.next_slide()
+        queue.focus_state(self, 1)
         self.wait()
         self.next_slide()
